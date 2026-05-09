@@ -1,0 +1,26 @@
+[project]
+name = "note_app"
+version = "0.1.0"
+description = "Demo TUI note-taking app built to learn the Textual framework"
+authors = [
+    {name = "Evgenii Pilatov",email = "eugenepilatov@gmail.com"}
+]
+requires-python = ">=3.11,<4.0"
+dependencies = [
+    "textual (>=8.2.5,<9.0.0)"
+]
+
+[tool.poetry]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+app = "note_app.cli:run"
+lint = "scripts.lint:run"
+
+[dependency-groups]
+dev = [
+    "ruff (>=0.15.12,<0.16.0)"
+]
