@@ -10,5 +10,5 @@ class NoteManagerApp(App):
         self.settings = settings
 
     def on_mount(self) -> None:
-        main_screen = MainScreen()
+        main_screen = MainScreen(self.settings)
         self.push_screen(main_screen)

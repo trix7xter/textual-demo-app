@@ -1,12 +1,10 @@
-from typing import Iterable
-
 from textual.reactive import reactive
 from textual.app import ComposeResult
 from textual.containers import VerticalScroll
 from textual.widgets import Markdown
 
 
-class MarkdownWidget(VerticalScroll):
+class NoteViewWidget(VerticalScroll):
     text = reactive("")
 
     def compose(self) -> ComposeResult:

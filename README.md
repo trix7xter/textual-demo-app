@@ -9,10 +9,12 @@ rather than reading docs in isolation.
 
 ## Features
 
-- Browse notes organized into folders
+- Browse notes organized into folders via a tree widget
 - Markdown rendering for note content
-- Domain / repository / screen layout to keep concerns separated
-- Configurable data directory
+- Layered architecture: domain models, repositories, screens, widgets
+- Filesystem-backed repositories with base-path sandboxing (no access
+  outside the configured data directory)
+- Configurable data directory passed through `AppSettings`
 
 ## Requirements
 
@@ -53,10 +55,24 @@ poetry run lint
 note_app/
     app.py            # Textual App entry point
     cli.py            # CLI launcher
-    config/           # App settings
-    domain/           # Note and Folder models
-    repositories/    # Persistence layer
-    screens/          # Textual screens
-    widgets/          # Custom widgets
+    config/           # App settings (AppSettings)
+    domain/           # Note and Folder dataclasses
+    repositories/     # Abstract bases + filesystem implementations
+        base_folder_repository.py
+        base_note_repository.py
+        folder_repository.py
+        note_repository.py
+    screens/          # Textual screens (MainScreen)
+    widgets/          # Custom widgets (FileTreeWidget, NoteViewWidget)
 ```
-# textual-demo-app
+
+## Architecture notes
+
+- `domain/` holds plain dataclasses (`Note`, `Folder`) with `Path`-typed
+  locations.
+- `repositories/` defines abstract interfaces (`BaseFolderRepository`,
+  `BaseNoteRepository`) and filesystem implementations. All path
+  operations are validated against the configured base path.
+- Screens receive `AppSettings` and instantiate the repositories they
+  need, then inject them into widgets — widgets depend on the abstract
+  base, not the concrete implementation.
