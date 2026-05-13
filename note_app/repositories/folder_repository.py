@@ -7,7 +7,7 @@ from note_app.repositories.base_folder_repository import BaseFolderRepository
 
 class FolderRepository(BaseFolderRepository):
     def __init__(self, base_path: Path) -> None:
-        self.base_path = base_path
+        self.base_path = base_path.resolve()
 
     def _check_within_base(self, path: Path) -> None:
         if self.base_path not in path.parents and path != self.base_path:

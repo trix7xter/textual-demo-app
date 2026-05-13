@@ -7,7 +7,7 @@ from note_app.repositories.base_note_repository import BaseNoteRepository
 
 class NoteRepository(BaseNoteRepository):
     def __init__(self, base_path: Path) -> None:
-        self.base_path = base_path
+        self.base_path = base_path.resolve()
 
     def _check_within_base(self, path: Path) -> None:
         if self.base_path not in path.parents and path != self.base_path:
@@ -30,7 +30,7 @@ class NoteRepository(BaseNoteRepository):
 
         return sorted(notes, key=lambda n: n.name)
 
-    def create_note(self, path: Path, name: str) -> Note:
+    def create_note(self, path: Path, name: str, content: str) -> Note:
         path = path.resolve()
         self._check_within_base(path)
         if not path.is_dir():
@@ -39,7 +39,9 @@ class NoteRepository(BaseNoteRepository):
             raise ValueError("Invalid note name")
 
         note_path = path / f"{name}.md"
-        note_path.touch(exist_ok=False)
+        if note_path.exists():
+            raise ValueError(f"Note already exists: {note_path}")
+        note_path.write_text(content, encoding="utf-8")
         return Note(name, note_path)
 
     def update_note(self, note: Note, content: str, new_name: Optional[str]) -> Note:
@@ -48,15 +50,19 @@ class NoteRepository(BaseNoteRepository):
         if not path.is_file():
             raise ValueError(f"Note doesn't exist: {path}")
 
-        path.write_text(content, encoding="utf-8")
-
         if new_name and new_name != note.name:
             if "/" in new_name or "\\" in new_name:
                 raise ValueError("Invalid note name")
-            new_path = path.parent / f"{new_name}.md"
+            new_path = (path.parent / f"{new_name}.md").resolve()
+            self._check_within_base(new_path)
+            if new_path.exists():
+                raise ValueError(f"Note already exists: {new_path}")
+            path.write_text(content, encoding="utf-8")
             path.rename(new_path)
-            return Note(new_name, new_path)
-        return note
+            return Note(new_name, new_path, content=content)
+
+        path.write_text(content, encoding="utf-8")
+        return Note(note.name, path, content=content)
 
     def delete_note(self, note: Note) -> None:
         path = note.path.resolve()
@@ -64,3 +70,11 @@ class NoteRepository(BaseNoteRepository):
         if not path.is_file():
             raise ValueError(f"Note doesn't exist: {path}")
         path.unlink()
+
+    def load_note(self, path: Path) -> Note:
+        path = path.resolve()
+        self._check_within_base(path)
+        if not path.is_file():
+            raise ValueError(f"Note doesn't exist: {path}")
+        content = path.read_text(encoding="utf-8")
+        return Note(path.stem, path, content)

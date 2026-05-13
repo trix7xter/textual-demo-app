@@ -1,0 +1,54 @@
+import httpx
+from textual.app import ComposeResult
+from textual.screen import ModalScreen
+from textual.widgets import Static, Input, Button
+from textual.containers import Container, Horizontal
+
+
+class ImportModal(ModalScreen):
+    CSS = """
+        #dialog {
+            border: solid grey;
+        }
+
+        #title {
+            dock: top;
+            content-align: center middle;
+            padding: 0 1;
+            height: 2;
+        }
+        #buttons {
+            align: center middle;
+        }
+    """
+
+    def compose(self) -> ComposeResult:
+        with Container():
+            yield Static("Import data", id="title")
+            yield Input(placeholder="Enter url for import", id="input-url")
+            with Horizontal(id="buttons"):
+                yield Button("Import", variant="primary", id="import-btn")
+                yield Button("Cancel", id="cancel-btn")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "import-btn":
+            url_input = self.query_one("#input-url", Input)
+            url = url_input.value.strip()
+            if url:
+                self.app.call_later(self.import_data, url)
+            else:
+                url_input.styles.border = ("solid", "red")
+        else:
+            self.dismiss(None)
+
+    async def import_data(self, url: str) -> None:
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                response = await client.get(url)
+                response.raise_for_status()
+                data = response.text
+                self.dismiss(data)
+        except httpx.HTTPError as e:
+            self.app.notify(f"Download error {e}", severity="error")
+        except Exception as e:
+            self.app.notify(f"Unknown error: {e}", severity="error")
